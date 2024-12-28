@@ -26,40 +26,57 @@ str(eduwa, width = 70, strict.width = 'cut')
 
 ###
 
-head(eduwa$LocaleType, 20)
+ruralEduwa = eduwa[eduwa$LocaleType=='Rural',]
+ruralEduwa$LocaleSub = droplevels(ruralEduwa$LocaleSub)
+table(ruralEduwa$LocaleSub)
+ruralEduwa$LocaleType = droplevels(ruralEduwa$LocaleType)
+head(ruralEduwa$LocaleType, 20)
 
 # absolute values
-absoluteT=table(eduwa$LocaleType,
-                exclude = 'nothing') #include all values!
-absoluteT
-
-names(absoluteT)[5] = "Unknown"
+absoluteS = table(ruralEduwa$LocaleSub)
+absoluteS
 
 # percent values 
-
-propT=prop.table(absoluteT)*100
-propT
+propS = prop.table(absoluteS) * 100
+propS
 
 # relative values
-prop.table(absoluteT)
-
-# pie(absoluteT) # pies are not the first option.
+prop.table(absoluteS)
 
 # as data frame
-(tableFreq = as.data.frame(absoluteT))
-names(tableFreq) = c("Locale", "Count")
+(tableFreq = as.data.frame(absoluteS))
+names(tableFreq) = c("RuralLocale", "Count", "Percent")
 
 # adding percents:
-tableFreq$Percent = as.vector(propT)
+tableFreq$Percent = as.vector(propS)
 
-#base GGPLOT2 starts with a "base", telling WHAT VARIABLES TO PLOT
+# Remove "Rural: " from factor levels
+levels(tableFreq$RuralLocale) <- c("Fringe","Distant","Remote")
+
+# Initialize base plot, reorder by percentage
 base = ggplot(data = tableFreq, 
-             aes(x = Locale, # horizontal
-                 y = Count)) #vertical
+              aes(x = reorder(RuralLocale, Percent), 
+                  y = Percent))
+base = base + theme_classic()
 
-plot1 = base + geom_bar(fill ="gray",
-                        stat = 'identity') # notice the "stat"
-plot1
+# lollipop style
+base = base + geom_segment(aes(y = 0,
+                               x = reorder(RuralLocale,Percent),
+                               yend = Percent,
+                               xend = reorder(RuralLocale,Percent)), 
+                               color = "grey50") 
+
+# Custom Y-axis labels: Decorate with percent symbol
+labels <- function(x) {
+  paste(x, "%")
+}
+base = base + scale_y_continuous(breaks = c(0, 10, 25, 40),
+                                 limits = c(0, 40),
+                                 labels = labels)
+
+
+
+
 
 titleText='Where are Public Schools located?'
 sub_titleText='Washington State - 2019'
@@ -96,14 +113,9 @@ plot3 = plot2 + geom_hline(yintercept = 25, #where
 plot3
 
 # customize Y axis
-# Custom Y-axis labels 
-labels <- function(x) {
-  paste(x, "%")
-}
 
-plot4 = plot3 + scale_y_continuous(breaks = c(0, 10, 25, 40),
-                                   limits = c(0, 40), 
-                                   labels = labels) 
+
+plot4 = plot3 
 plot4
 
 #positions: 0 left / 1 right / 0.5 center
@@ -111,7 +123,7 @@ plot5 = plot4 + theme(plot.caption = element_text(hjust = 0),
                       plot.title = element_text(hjust = 0.5))
 plot5
 
-bar_labels = paste0(round(tableFreq$Percent,2), '%')
+
 
 plot6 = plot5 + geom_text(vjust=0, #hjust if flipping
                           size = 5,
@@ -119,5 +131,3 @@ plot6 = plot5 + geom_text(vjust=0, #hjust if flipping
                               label = bar_labels))
 plot6 # + coord_flip() # wanna flip the plot?
 
-# left off at the text, 
-# Bar plots are the default option for categorical variables. In general, you see the distribution of the classification, which allows you to identify concentration. For that reason, ordering the bars by height can be helpful. Let´s redo everything, but reordering the bars by percent values:
