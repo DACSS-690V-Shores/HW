@@ -1,16 +1,19 @@
 
-library(ggplot2)
+
+my_packages <- c("tidyverse",
+                 "ggplot2") # create vector of packages
+invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 # get data ------------------------------------------------------------
 
 rm(list = ls()) # clean memory
 
-location='https://github.com/DACSS-Visual/tabular_univar_cat/raw/main/data/'
-file='eduwa.rda'
-link=paste0(location,file)
+location = 'https://github.com/DACSS-Visual/tabular_univar_cat/raw/main/data/'
+file = 'eduwa.rda'
+link = paste0(location,file)
 
 #getting the data TABLE from the file in the cloud:
-load(file=url(link))
+load(file = url(link))
 
 
 # see data ----------------------------------------------------------
@@ -26,108 +29,92 @@ str(eduwa, width = 70, strict.width = 'cut')
 
 ###
 
-ruralEduwa = eduwa[eduwa$LocaleType=='Rural',]
+# Calculate mean Student Teacher Ratio for entire Washington data set
+meanSTRatio = summary(eduwa$Student.Teacher.Ratio)[[4]]
+
+# Create new df with just the Rural locales, get rid of empty factor levels
+ruralEduwa = eduwa[eduwa$LocaleType == 'Rural',]
 ruralEduwa$LocaleSub = droplevels(ruralEduwa$LocaleSub)
-table(ruralEduwa$LocaleSub)
 ruralEduwa$LocaleType = droplevels(ruralEduwa$LocaleType)
-head(ruralEduwa$LocaleType, 20)
 
-# absolute values
-absoluteS = table(ruralEduwa$LocaleSub)
-absoluteS
+# Let's not assume 'unknowns' are rural
+ruralEduwa = ruralEduwa %>% drop_na(LocaleType)
 
-# percent values 
-propS = prop.table(absoluteS) * 100
-propS
+# means of Student Teacher ratio for each sub
+ruralEduwa_STRatio = ruralEduwa %>%
+  group_by(LocaleSub) %>%
+  summarise_at(vars(Student.Teacher.Ratio), list(name = mean), na.rm = TRUE)
 
-# relative values
-prop.table(absoluteS)
+# Rename variables
+names(ruralEduwa_STRatio) = c("RuralLocale", "mean_Student.Teacher.Ratio")
 
-# as data frame
-(tableFreq = as.data.frame(absoluteS))
-names(tableFreq) = c("RuralLocale", "Count", "Percent")
+# Remove the string "Rural: " from factor levels
+levels(ruralEduwa_STRatio$RuralLocale) <- c("Fringe","Distant","Remote")
 
-# adding percents:
-tableFreq$Percent = as.vector(propS)
+# Calculate difference of rural STR from total STR
+ruralEduwa_STRatio$difference = 
+  ruralEduwa_STRatio$mean_Student.Teacher.Ratio - meanSTRatio
 
-# Remove "Rural: " from factor levels
-levels(tableFreq$RuralLocale) <- c("Fringe","Distant","Remote")
+# a new column for color: Greater Than Mean (gtMean)
+ruralEduwa_STRatio$gtMean <-
+  ifelse(ruralEduwa_STRatio$difference > 0, "Yes", "No")
+ruralEduwa_STRatio$gtMean <- 
+  factor(ruralEduwa_STRatio$gtMean,
+         levels = c("Yes", "No"))
 
-# Initialize base plot, reorder by percentage
-base = ggplot(data = tableFreq, 
-              aes(x = reorder(RuralLocale, Percent), 
-                  y = Percent))
+# Load up plot information variables
+titleText = 'Student Teacher Ratios in Rural Public Schools'
+sub_titleText = 'Difference from the mean STR of all schools in Washington, 2019'
+sourceText = 'Source: US Department of Education'
+x.AxisText = "Rural Sub Locations"
+y.AxisText = "Difference from mean STR"
+legTitle = "Greater than Mean"
+
+# Initialize base plot, reorder by mean
+base = ggplot(data = ruralEduwa_STRatio, 
+              aes(x = reorder(RuralLocale, difference), 
+                  y = difference,
+                  color = gtMean,
+                  label = round(mean_Student.Teacher.Ratio,1))) +
+  scale_color_manual(values = 
+                       c(Yes = "#882255", 
+                         No = "#117733")) +
+  geom_text(nudge_x = 0.3, # to the right
+            show.legend = FALSE) 
 base = base + theme_classic()
 
 # lollipop style
-base = base + geom_segment(aes(y = 0,
-                               x = reorder(RuralLocale,Percent),
-                               yend = Percent,
-                               xend = reorder(RuralLocale,Percent)), 
-                               color = "grey50") 
+base = base + 
+  geom_segment(aes(y = 0,
+                   x = reorder(RuralLocale, difference),
+                   yend = difference,
+                   xend = reorder(RuralLocale, difference)), 
+               color = "grey50") + 
+  geom_point(size = 5)
 
-# Custom Y-axis labels: Decorate with percent symbol
-labels <- function(x) {
-  paste(x, "%")
-}
-base = base + scale_y_continuous(breaks = c(0, 10, 25, 40),
-                                 limits = c(0, 40),
-                                 labels = labels)
+# Draw horizontal line (yintercept) representing mean Student.Teacher.Ratio
+# from the original data set, 
+# including all locales (City, Suburb, Town, Unknown) in addition to Rural.
+base = base + geom_hline(yintercept = 0, 
+                         linetype = "dashed", 
+                         linewidth = 1.5, #thickness
+                         alpha = 0.5) #transparency
 
-
-
-
-
-titleText='Where are Public Schools located?'
-sub_titleText='Washington State - 2019'
-sourceText='Source: US Department of Education'
-# are these obvious?
-x.AxisText="Locations"
-y.AxisText="Count"
-
-plot2 = plot1 + labs(title = titleText,
-                     subtitle = sub_titleText,
-                     x = x.AxisText,
-                     y = NULL, #y.AxisText
-                     caption = sourceText) 
-plot2
-
-# begin again with Percent col
-
-base = ggplot(data = tableFreq, 
-             aes(x = Locale,
-                 y = Percent)) 
-
-plot1 = base + geom_bar(fill ="gray",
-                        stat = 'identity') 
-
-plot2 = plot1 + labs(title = titleText,
-                     x = NULL, 
-                     y = NULL,
-                     caption = sourceText)
-
-plot3 = plot2 + geom_hline(yintercept = 25, #where
-                           linetype = "dashed", 
-                           linewidth = 1.5, #thickness
-                           alpha = 0.5) #transparency
-plot3
-
-# customize Y axis
-
-
-plot4 = plot3 
-plot4
-
-#positions: 0 left / 1 right / 0.5 center
-plot5 = plot4 + theme(plot.caption = element_text(hjust = 0), 
-                      plot.title = element_text(hjust = 0.5))
-plot5
+# Decorate with contextual info
+base = base + 
+  labs(title = titleText,
+       subtitle = sub_titleText,
+       x = x.AxisText,
+       y = y.AxisText, 
+       caption = sourceText,
+       colour = legTitle) +
+  theme(plot.caption = element_text(hjust = 0),
+        plot.title = element_text(hjust = 0))
 
 
 
-plot6 = plot5 + geom_text(vjust=0, #hjust if flipping
-                          size = 5,
-                          aes(y = Percent,
-                              label = bar_labels))
-plot6 # + coord_flip() # wanna flip the plot?
+
+
+
+
 
