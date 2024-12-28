@@ -64,18 +64,23 @@ ruralEduwa_STRatio$gtMean <-
 
 # Load up plot information variables
 titleText = 'Student Teacher Ratios in Rural Public Schools'
-sub_titleText = 'Difference from the mean STR of all schools in Washington, 2019'
+sub_titleText = 'Washington, 2019'
 sourceText = 'Source: US Department of Education'
-x.AxisText = "Rural Sub Locations"
-y.AxisText = "Difference from mean STR"
-legTitle = "Greater than Mean"
+x.AxisText = 'Rural Sub Locations'
+legTitle = 'Greater than \nSTR mean'
+meanAnnotation = paste("STR mean of all WA schools =", round(meanSTRatio, 2))
+
 
 # Initialize base plot, reorder by mean
+# Color-blind colors chosen from:
+# https://davidmathlogic.com/colorblind/
 base = ggplot(data = ruralEduwa_STRatio, 
               aes(x = reorder(RuralLocale, difference), 
                   y = difference,
                   color = gtMean,
-                  label = round(mean_Student.Teacher.Ratio,1))) +
+                  label = paste("mean\n",
+                                round(mean_Student.Teacher.Ratio, 1))),
+              hjust = 0) +
   scale_color_manual(values = 
                        c(Yes = "#882255", 
                          No = "#117733")) +
@@ -88,17 +93,34 @@ base = base +
   geom_segment(aes(y = 0,
                    x = reorder(RuralLocale, difference),
                    yend = difference,
-                   xend = reorder(RuralLocale, difference)), 
+                   xend = reorder(RuralLocale, difference)),
                color = "grey50") + 
   geom_point(size = 5)
 
 # Draw horizontal line (yintercept) representing mean Student.Teacher.Ratio
 # from the original data set, 
 # including all locales (City, Suburb, Town, Unknown) in addition to Rural.
-base = base + geom_hline(yintercept = 0, 
-                         linetype = "dashed", 
-                         linewidth = 1.5, #thickness
-                         alpha = 0.5) #transparency
+base = base + 
+  geom_hline(yintercept = 0, 
+             linewidth = 1.5, #thickness
+             alpha = 0.5) + #transparency
+  annotate(geom = "text", 
+           x = 0.5, 
+           y = 0.3, 
+           label = meanAnnotation,
+           hjust = 0,
+           vjust = 1,
+           size = 4)
+
+# Lollipop labels mean we don't need Y-axis
+
+base = base + 
+  theme(axis.ticks.y = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y = element_blank(),
+        axis.line.x = element_blank(), # can also tidy up x-axis
+        axis.ticks.x = element_blank())
 
 # Decorate with contextual info
 base = base + 
@@ -110,7 +132,6 @@ base = base +
        colour = legTitle) +
   theme(plot.caption = element_text(hjust = 0),
         plot.title = element_text(hjust = 0))
-
 
 
 
