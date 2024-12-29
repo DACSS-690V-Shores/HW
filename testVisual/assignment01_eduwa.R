@@ -63,12 +63,13 @@ ruralEduwa_STRatio$gtMean <-
          levels = c("Yes", "No"))
 
 # Load up plot information variables
-titleText = 'Student Teacher Ratios in Rural Public Schools'
-sub_titleText = 'Washington, 2019'
+titleText = 'Rural public schools show smaller classroom sizes'
+sub_titleText = 'Student teacher ratios (STR) of rural schools in Washington, 2019'
 sourceText = 'Source: US Department of Education'
-x.AxisText = 'Rural Sub Locations'
-legTitle = 'Greater than \nSTR mean'
-meanAnnotation = paste("STR mean of all WA schools =", round(meanSTRatio, 2))
+x.AxisText = 'Rural sub locales'
+y.AxisText = 'Difference from statewide STR mean'
+legTitle = 'Greater than \nstatewide mean'
+meanAnnotation = paste("Statewide STR mean =", round(meanSTRatio, 2))
 
 
 # Initialize base plot, reorder by mean
@@ -85,6 +86,7 @@ base = ggplot(data = ruralEduwa_STRatio,
                        c(Yes = "#882255", 
                          No = "#117733")) +
   geom_text(nudge_x = 0.3, # to the right
+            size = 3,
             show.legend = FALSE) 
 base = base + theme_classic()
 
@@ -110,16 +112,20 @@ base = base +
            label = meanAnnotation,
            hjust = 0,
            vjust = 1,
-           size = 4)
+           size = 3)
 
 # Lollipop labels mean we don't need Y-axis
 
+# base = base + 
+#  theme(axis.title.y = element_blank(),
+#        axis.text.y = element_blank(),
+#        axis.line.x = element_blank(), # can also tidy up x-axis
+#        axis.ticks.x = element_blank())
+
 base = base + 
-  theme(axis.ticks.y = element_blank(),
-        axis.title.y = element_blank(),
-        axis.line.y = element_blank(),
-        axis.text.y = element_blank(),
-        axis.line.x = element_blank(), # can also tidy up x-axis
+  theme(axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.line.x = element_blank(),
         axis.ticks.x = element_blank())
 
 # Decorate with contextual info
@@ -131,7 +137,10 @@ base = base +
        caption = sourceText,
        colour = legTitle) +
   theme(plot.caption = element_text(hjust = 0),
-        plot.title = element_text(hjust = 0))
+        plot.title = element_text(hjust = 0),
+        legend.title = element_text(size = 6),
+        legend.text = element_text(size = 6))
+
 
 # write to an R data serialization file
 saveRDS(base, file = "assignment01_eduwa.rds")

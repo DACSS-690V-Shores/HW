@@ -19,7 +19,7 @@ Chapter 1
 ===================================== 
 
 
-### Tim's lollipop plot compares the mean student teacher ratios (STRs) of rural sub locales to the mean STR of all sub locales in the state.
+### Tim's lollipop plot
 
 
 ```{r}
