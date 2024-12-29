@@ -138,8 +138,8 @@ base = base +
        colour = legTitle) +
   theme(plot.caption = element_text(hjust = 0),
         plot.title = element_text(hjust = 0),
-        legend.title = element_text(size = 6),
-        legend.text = element_text(size = 6))
+        legend.title = element_text(size = ),
+        legend.text = element_text(size = 8))
 
 
 # write to an R data serialization file
