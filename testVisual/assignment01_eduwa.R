@@ -133,6 +133,8 @@ base = base +
   theme(plot.caption = element_text(hjust = 0),
         plot.title = element_text(hjust = 0))
 
+# write to an R data serialization file
+saveRDS(base, file = "assignment01_eduwa.rds")
 
 
 
