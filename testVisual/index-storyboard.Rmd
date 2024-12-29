@@ -1,6 +1,6 @@
 ---
-title: "My Storyboard at DACSS - pages"
-bibliography: testVisual.bib
+title: "Tim Shores's DACSS 690V Storyboard"
+bibliography: dacss690V.bib
 output: 
   flexdashboard::flex_dashboard
 ---
@@ -13,17 +13,17 @@ Sidebar {.sidebar}
 =====================================
 
 
-Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2023.
+Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @aden-buie_flexdashboard_2024.
 
 Chapter 1
 ===================================== 
 
 
+### Tim's lollipop plot compares the mean student teacher ratios (STRs) of rural sub locales to the mean STR of all sub locales in the state.
 
-### Worst barplot
 
 ```{r}
-readRDS("del1Draft.rds")
+readRDS("assignment01_eduwa.rds")
 ```
 
 
@@ -32,30 +32,30 @@ Chapter 2
 
 
 
-### Worst histogram
+### Histogram coming soon
 
 ```{r}
-readRDS("del2Draft.rds")
+
 ```
 
 Chapter 3
 ===================================== 
 
 
-### Worst scatterplot
+### Scatterplot coming soon
 
 ```{r}
-readRDS("del3Draft.rds")
+
 ```
 
 Chapter 4
 ===================================== 
 
 
-### Worst map
+### Map plot coming soon
 
 ```{r}
-readRDS("del4Draft.rds")
+
 ```
 
 

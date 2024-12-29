@@ -1,6 +1,6 @@
 ---
 title: "Tim Shores' DACSS Dashboard"
-bibliography: testVisual.rdf
+bibliography: dacss690V.bib
 output: 
   flexdashboard::flex_dashboard:
     orientation: columns
@@ -12,7 +12,7 @@ library(flexdashboard) # always
 
 ## Intro {.sidebar}
 
-#Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @sievert_flexdashboard_2022.
+Preparing the dashboard based on the instructions given at @magallanes_reyes_data_2022, and @sievert_flexdashboard_2022.
 
 ### References
 <div id="refs"></div>
