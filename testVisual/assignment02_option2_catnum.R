@@ -1,10 +1,20 @@
 
 my_packages <- c("tidyverse",
                  "ggplot2",
-                 "ggpubr") # create vector of packages
+                 "ggpubr",
+                 "rio") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
 # get data ------------------------------------------------------------
+
+linkMass="https://github.com/DACSS-Visual/tabular_bivar_catcat/raw/refs/heads/main/data/MSP%20DFS%20Arrests%2019-20Q1.xlsx"
+
+#see it
+arrests = rio::import(linkMass,which = 1)
+head(arrests)
+
+
+#
 
 rm(list = ls()) # clean memory
 
@@ -61,4 +71,22 @@ kruskal.test(yearsToReport ~ Precinct, data = crimePrecinct)
 # There is a significant probability (0.1) that some precinct is different 
 # from another; this can be identified here:
 pairwise.wilcox.test(crimePrecinct$yearsToReport, crimePrecinct$Precinct)
+# Arguably, EAST might differ from NORTH; and WEST from NORTH. 
+# What plot may help us show that?
 
+# Let’s redo the boxplot and histograms:
+
+baseBox = ggplot(data = crimePrecinct,
+                 aes(y = yearsToReport))
+baseBox + geom_boxplot(aes(x = reorder(Precinct, yearsToReport, median))) +
+  coord_flip()
+
+# Density plots?
+ggplot(crimePrecinct) + 
+  geom_density(aes(x = yearsToReport), show.legend = F) +
+  facet_grid(reorder(Precinct, yearsToReport, median) ~ .)
+
+# Histogram?
+baseHist = ggplot(data = crimePrecinct, 
+                  aes(x = yearsToReport))
+baseHist + geom_histogram() + facet_grid(reorder(Precinct, yearsToReport, median) ~ .)
