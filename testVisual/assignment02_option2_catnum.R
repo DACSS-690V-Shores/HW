@@ -7,11 +7,16 @@ invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple p
 
 # get data ------------------------------------------------------------
 
+# Massachusetts State Police arrest details.
 linkMass="https://github.com/DACSS-Visual/tabular_bivar_catcat/raw/refs/heads/main/data/MSP%20DFS%20Arrests%2019-20Q1.xlsx"
 
 #see it
 arrests = rio::import(linkMass,which = 1)
 head(arrests)
+
+# Use the columns Arrest Type and Age to make a visual. 
+# The excel file has the data in the first sheet; 
+# the second one has the Arrest Type codes (5 codes).
 
 
 #
