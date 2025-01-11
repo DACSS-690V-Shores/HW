@@ -32,10 +32,10 @@ Chapter 2
 
 
 
-### Histogram coming soon
+### Tim's boxplot
 
 ```{r}
-
+readRDS("assignment02_option2_catnum.rds")
 ```
 
 Chapter 3

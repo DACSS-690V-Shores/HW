@@ -2,7 +2,8 @@
 my_packages <- c("tidyverse",
                  "ggplot2",
                  "ggpubr",
-                 "forcats",
+                 #"forcats",
+                 "paletteer",
                  "rio") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
@@ -26,81 +27,98 @@ arrests <- arrests %>%
 
 tapply(arrests$Age,arrests$Arrest_Type, summary)
 
-# unable to find a data dictionary that defines Arrest Type,
-# but here's my best guess:
-# F = Felony without warrant
-# M = Misdemeanor
-# O = On-view
-# W = Warrant
-
   # set NA Ages to median age
 arrests$Age[is.na(arrests$Age)] <- median(arrests$Age, na.rm = TRUE)
   # set NA Arrest Types to "Unknown"
 arrests$Arrest_Type[is.na(arrests$Arrest_Type)] <- "Unknown"
-
-# Replace values in the column
+  # Replace values in the column
+  # (codebook in source spreadsheet)
 arrests$Arrest_Type <- recode(arrests$Arrest_Type,
                               "F" = "Felony",
                               "O" = "Other",
                               "M" = "Misdemeanor",
                               "W" = "Warrant")
 
-  # Boxplot
-baseArrest = ggplot(data = arrests,
-                    aes(x = Arrest_Type, 
-                        y = Age)) 
-boxArrest = baseArrest + geom_boxplot() + labs(title = "woof")
+# Calculate counts for each Arrest_Type
+counts <- arrests %>%
+  group_by(Arrest_Type) %>%
+  summarize(Count = n())
 
-  # Density  
-ggplot(arrests) + 
-  geom_density(aes(x = Age),show.legend = F) + 
-  facet_grid(reorder(Arrest_Type, Age, median) ~ .) 
 
-  # Jitter w/ error bars
-  # for colors see https://r-charts.com/color-palettes/#discrete
-baseMEANs = ggplot(arrests, aes(x = fct_infreq(Arrest_Type), # forcats to reorder
-                                y = Age)) 
-jitterMEANs = baseMEANs + geom_jitter(color = "#009292",
-                                     alpha = 0.1 #transparency
-                                     )
+  # Reorder Arrest_Type by Count (greatest to least)
+arrests$Arrest_Type <- factor(arrests$Arrest_Type, 
+                              levels = counts %>% 
+                                arrange(desc(Count)) %>% 
+                                pull(Arrest_Type))
+
+# Load up plot information variables
+titleText = 'Misdemeanors and warrants lead Massachusetts arrests'
+sub_titleText = 'State police arrests in 2019-2020 centered on 30-35 year olds'
+sourceText = 'Source: Massachusetts State Police'
+x.AxisText = 'Age of Arrestee'
+
+# Get the number of unique arrest types
+n_types <- length(unique(arrests$Arrest_Type))
+
+base = ggplot(arrests, aes(x = Age,
+                           y = reorder(Arrest_Type, Arrest_Type, function(x) length(x)),
+                           fill = Arrest_Type)) +
+    # uses order by Arrest_Type count (descending) to fill scale and create legend
+    # colors from https://r-charts.com/color-palettes/#discrete
+  scale_fill_manual(values = paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
+                    labels = paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
+                                    " (n=", counts %>% arrange(desc(Count)) %>% pull(Count), ")")) +
+  guides(fill = guide_legend(title = "Arrest Type (Count)")) +
+  theme(legend.position = "right")
+
+
+
+
+jitter = base + geom_jitter(color = "#6DB6FF",
+                            alpha = 0.2, #transparency
+                            size = 0.5)
   # layer a boxplot over the jitter point plot
   # the notch shows confidence interval
   # when the notches between two groups don't overlap then
   # it suggests medians are significantly different
   # 
-jitterMEANs = jitterMEANs + 
-  geom_boxplot(alpha = 0.2, # Adjust alpha for transparency
-               fill = "#FFFF6D",
-               color = "#924900",  
-               linewidth = 1,
+box = jitter + 
+  geom_boxplot(alpha = 0.7, # Adjust alpha for transparency
+               color = "gray50", 
+               linewidth = 0.7,
                notch = TRUE,
-               notchwidth = 0.75) +
-    # use μ to indicate where mean is
-  geom_text(stat = "summary", 
-            label = "μ",
-            color = "#924900",
-            size = 4,
-            fontface = "bold")
+               notchwidth = 0.75,
+               width = 0.6) +
+    # Adds spacing above and below
+  scale_y_discrete(expand = expansion(mult = c(0.2, 0)))  
 
-
-# Load up plot information variables
-titleText = 'Arrests centered on 30-40 year olds'
-sub_titleText = 'Misdemeanor and warrant arrests lead in Massachusetts 2019-2020'
-sourceText = 'Source: Massachusetts State Police'
-x.AxisText = 'Arrest Type'
-y.AxisText = 'Age of Arrestee'
-legTitle = 'Greater than \nstatewide mean'
-meanAnnotation = paste("Statewide STR mean =", round(meanSTRatio, 2))
 
 # Decorate with contextual info
-jitterMEANs = jitterMEANs + 
+final = box + 
   labs(title = titleText,
        subtitle = sub_titleText,
        x = x.AxisText,
-       y = y.AxisText, 
-       caption = sourceText,
-       colour = legTitle) +
+       caption = sourceText) +
+  scale_x_continuous(breaks = seq(min(arrests$Age), max(arrests$Age), by = 10)) +
   theme(plot.caption = element_text(hjust = 0),
         plot.title = element_text(hjust = 0),
-        legend.title = element_text(size = ),
-        legend.text = element_text(size = 8))
+        plot.subtitle = element_text(size = 10,
+                                     color = "gray50"),
+        axis.line.y = element_blank(),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_line(color = "gray80", linewidth = 0.5),
+        panel.background = element_blank(),  # Remove panel background
+        plot.background = element_blank(),  # Remove plot background
+        axis.title.y = element_blank(),   # Remove y-axis label
+        axis.text.y = element_blank(),    # Remove y-axis elements
+        panel.grid.major.x = element_line(color = "gray80", linewidth = 0.5),  # Add vertical grid lines
+        legend.title = element_text(size = 8),  # Adjust title size
+        legend.text = element_text(size = 8),    # Adjust text size
+          # Move label to the right and align vertically
+        axis.title.x = element_text(hjust = 0.04, 
+                                    size = 10,
+                                    color = "gray50"))
+
+# write to an R data serialization file
+saveRDS(final, file = "assignment02_option2_catnum.rds")
+
