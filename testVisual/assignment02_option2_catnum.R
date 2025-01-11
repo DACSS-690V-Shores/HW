@@ -39,7 +39,7 @@ arrests$Arrest_Type <- recode(arrests$Arrest_Type,
                               "M" = "Misdemeanor",
                               "W" = "Warrant")
 
-# Calculate counts for each Arrest_Type
+  # Calculate counts for each Arrest_Type
 counts <- arrests %>%
   group_by(Arrest_Type) %>%
   summarize(Count = n())
@@ -57,7 +57,8 @@ sub_titleText = 'State police arrests in 2019-2020 centered on 30-35 year olds'
 sourceText = 'Source: Massachusetts State Police'
 x.AxisText = 'Age of Arrestee'
 
-# Get the number of unique arrest types
+  # Get the number of unique arrest types
+  # (Only for color scale below - can remove this when remove color scale)
 n_types <- length(unique(arrests$Arrest_Type))
 
 base = ggplot(arrests, aes(x = Age,
@@ -65,9 +66,13 @@ base = ggplot(arrests, aes(x = Age,
                            fill = Arrest_Type)) +
     # uses order by Arrest_Type count (descending) to fill scale and create legend
     # colors from https://r-charts.com/color-palettes/#discrete
-  scale_fill_manual(values = paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
-                    labels = paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
-                                    " (n=", counts %>% arrange(desc(Count)) %>% pull(Count), ")")) +
+  scale_fill_manual(values = 
+                      paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
+                    labels = 
+                      paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
+                             " (n=", 
+                             counts %>% arrange(desc(Count)) %>% pull(Count), 
+                             ")")) +
   guides(fill = guide_legend(title = "Arrest Type (Count)")) +
   theme(legend.position = "right")
 
@@ -92,9 +97,21 @@ box = jitter +
     # Adds spacing above and below
   scale_y_discrete(expand = expansion(mult = c(0.2, 0)))  
 
+  # calculate first quantile by type to figure out position for in-graph labels
+q1_values <- arrests %>%
+  group_by(Arrest_Type) %>%
+  summarize(Q1 = quantile(Age, 0.25))
+
+  # Testing: Update the plot with "Hello!" labels at Q1 positions
+q1labs <- box + 
+  geom_text(data = q1_values,
+            aes(x = Q1, y = Arrest_Type, label = "Hello!"),
+            color = "black",
+            size = 3,
+            hjust = 0)  # Set hjust = 0 to align left edge of text with Q1
 
 # Decorate with contextual info
-final = box + 
+final = q1labs + 
   labs(title = titleText,
        subtitle = sub_titleText,
        x = x.AxisText,
@@ -114,7 +131,7 @@ final = box +
         panel.grid.major.x = element_line(color = "gray80", linewidth = 0.5),  # Add vertical grid lines
         legend.title = element_text(size = 8),  # Adjust title size
         legend.text = element_text(size = 8),    # Adjust text size
-          # Move label to the right and align vertically
+          # Move x-axis label to the left
         axis.title.x = element_text(hjust = 0.04, 
                                     size = 10,
                                     color = "gray50"))
