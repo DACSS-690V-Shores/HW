@@ -2,6 +2,7 @@
 my_packages <- c("tidyverse",
                  "ggplot2",
                  "ggpubr",
+                 "forcats",
                  "rio") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
 
@@ -18,80 +19,55 @@ head(arrests)
 # The excel file has the data in the first sheet; 
 # the second one has the Arrest Type codes (5 codes).
 
+arrests <- arrests %>%
+  select("Arrest Type", Age) %>%
+  rename(Arrest_Type = "Arrest Type")
 
-#
 
-rm(list = ls()) # clean memory
+tapply(arrests$Age,arrests$Arrest_Type, summary)
 
-location = "https://github.com/DACSS-Visual/tabular_bivar_catcat/raw/main/data/"
-file = 'crime.RData'
-link = paste0(location,file)
+# unable to find a data dictionary that defines Arrest Type,
+# but here's my best guess:
+# F = Felony without warrant
+# M = Misdemeanor
+# O = On-view
+# W = Warrant
 
-#getting the data TABLE from the file in the cloud:
-load(file = url(link))
+  # set NA Ages to median age
+arrests$Age[is.na(arrests$Age)] <- median(arrests$Age, na.rm = TRUE)
+  # set NA Arrest Types to "Unknown"
+arrests$Arrest_Type[is.na(arrests$Arrest_Type)] <- "Unknown"
 
-# filter for specific years
-yearsSelected = 2011:2015
-subCrime = crime[crime$year %in% yearsSelected, ]
-subCrime = subCrime[complete.cases(subCrime), ]
+  # Boxplot
+baseArrest = ggplot(data = arrests,
+                    aes(x = Arrest_Type, 
+                        y = Age)) 
+boxArrest = baseArrest + geom_boxplot() + labs(title = "woof")
 
-# The goal is to find a visualization to represent the behavior of 
-# a numerical variable in each level of a categorical variable. 
-# Let’s choose one of each and see the descriptives:
-# tapply(subCrime$DaysToReport, subCrime$Precinct, summary)
+  # Density  
+ggplot(arrests) + 
+  geom_density(aes(x = Age),show.legend = F) + 
+  facet_grid(reorder(Arrest_Type, Age, median) ~ .) 
 
-# As there seems to be lots of asymmetry, let’s explore with boxplots 
-# several lengths using ggarrange from ggpubr:
+  # Jitter w/ error bars
+  # for colors see https://r-charts.com/color-palettes/#discrete
+baseMEANs = ggplot(arrests, aes(x = fct_infreq(Arrest_Type), # forcats to reorder
+                                y = Age)) 
+jitterMEANs = baseMEANs + geom_jitter(color = "#009292",
+                                     alpha = 0.1 #transparency
+                                     )
+  # layer a boxplot over the jitter point plot
+  # the notch shows confidence interval
+  # when the notches between two groups don't overlap then
+  # it suggests medians are significantly different
+jitterMEANs = jitterMEANs + geom_point(stat = "summary") +
+  geom_boxplot(alpha = 0.2, # Adjust alpha for transparency
+               fill = "#FFFF6D",
+               color = "#924900",  
+               linewidth = 1,
+               notch = TRUE,
+               notchwidth = 0.75,)
 
-baseDay = ggplot(data = subCrime,
-                 aes(x = Precinct,
-                     y = DaysToReport))
-boxDay = baseDay + geom_boxplot() + 
-  labs(title = "daily")
-baseWeek = ggplot(data = subCrime[subCrime$DaysToReport > 7, ],
-                  aes(x = Precinct, 
-                      y = DaysToReport))
-boxWeek = baseWeek + geom_boxplot() +
-  labs(title = "> week")
-baseMonth = ggplot(data = subCrime[subCrime$DaysToReport > 30, ],
-                   aes(x = Precinct,
-                       y = DaysToReport))
-boxMonth = baseMonth + geom_boxplot() + 
-  labs(title = "> month")
-baseYear = ggplot(data = subCrime[subCrime$DaysToReport > 365, ],
-                  aes(x = Precinct,
-                      y = DaysToReport))
-boxYear = baseYear + geom_boxplot() +
-  labs(title = "> year")
+jitterMEANs 
 
-ggarrange(boxDay, boxWeek, boxMonth, boxYear)
 
-# Let’s build our visual from the crimes that took ONE year or longer to report.
-crimePrecinct = subCrime[subCrime$DaysToReport >= 365, ]
-crimePrecinct$yearsToReport = crimePrecinct$DaysToReport / 365
-
-# In general, we want to see if the distribution is different across levels:
-kruskal.test(yearsToReport ~ Precinct, data = crimePrecinct)
-
-# There is a significant probability (0.1) that some precinct is different 
-# from another; this can be identified here:
-pairwise.wilcox.test(crimePrecinct$yearsToReport, crimePrecinct$Precinct)
-# Arguably, EAST might differ from NORTH; and WEST from NORTH. 
-# What plot may help us show that?
-
-# Let’s redo the boxplot and histograms:
-
-baseBox = ggplot(data = crimePrecinct,
-                 aes(y = yearsToReport))
-baseBox + geom_boxplot(aes(x = reorder(Precinct, yearsToReport, median))) +
-  coord_flip()
-
-# Density plots?
-ggplot(crimePrecinct) + 
-  geom_density(aes(x = yearsToReport), show.legend = F) +
-  facet_grid(reorder(Precinct, yearsToReport, median) ~ .)
-
-# Histogram?
-baseHist = ggplot(data = crimePrecinct, 
-                  aes(x = yearsToReport))
-baseHist + geom_histogram() + facet_grid(reorder(Precinct, yearsToReport, median) ~ .)
