@@ -60,6 +60,7 @@ jitterMEANs = baseMEANs + geom_jitter(color = "#009292",
   # the notch shows confidence interval
   # when the notches between two groups don't overlap then
   # it suggests medians are significantly different
+  # 
 jitterMEANs = jitterMEANs + geom_point(stat = "summary") +
   geom_boxplot(alpha = 0.2, # Adjust alpha for transparency
                fill = "#FFFF6D",
