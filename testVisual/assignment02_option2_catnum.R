@@ -2,7 +2,6 @@
 my_packages <- c("tidyverse",
                  "ggplot2",
                  "ggpubr",
-                 #"forcats",
                  "paletteer",
                  "rio") # create vector of packages
 invisible(lapply(my_packages, require, character.only = TRUE)) # load multiple packages
@@ -30,7 +29,7 @@ tapply(arrests$Age,arrests$Arrest_Type, summary)
   # set NA Ages to median age
 arrests$Age[is.na(arrests$Age)] <- median(arrests$Age, na.rm = TRUE)
   # set NA Arrest Types to "Unknown"
-arrests$Arrest_Type[is.na(arrests$Arrest_Type)] <- "Unknown"
+arrests$Arrest_Type[is.na(arrests$Arrest_Type)] <- "Unknown type"
   # Replace values in the column
   # (codebook in source spreadsheet)
 arrests$Arrest_Type <- recode(arrests$Arrest_Type,
@@ -38,12 +37,13 @@ arrests$Arrest_Type <- recode(arrests$Arrest_Type,
                               "O" = "Other",
                               "M" = "Misdemeanor",
                               "W" = "Warrant")
-
-  # Calculate counts for each Arrest_Type
+# Calculate for plot order and labels 
+  # First quantile by type to figure out position for in-graph labels
+  # Counts for each Arrest_Type
 counts <- arrests %>%
   group_by(Arrest_Type) %>%
-  summarize(Count = n())
-
+  summarize(Q1 = quantile(Age, 0.25),
+            Count = n())
 
   # Reorder Arrest_Type by Count (greatest to least)
 arrests$Arrest_Type <- factor(arrests$Arrest_Type, 
@@ -62,19 +62,19 @@ x.AxisText = 'Age of Arrestee'
 n_types <- length(unique(arrests$Arrest_Type))
 
 base = ggplot(arrests, aes(x = Age,
-                           y = reorder(Arrest_Type, Arrest_Type, function(x) length(x)),
-                           fill = Arrest_Type)) +
+                           y = reorder(Arrest_Type, Arrest_Type, function(x) length(x))))
+#                           fill = Arrest_Type)) +
     # uses order by Arrest_Type count (descending) to fill scale and create legend
     # colors from https://r-charts.com/color-palettes/#discrete
-  scale_fill_manual(values = 
-                      paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
-                    labels = 
-                      paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
-                             " (n=", 
-                             counts %>% arrange(desc(Count)) %>% pull(Count), 
-                             ")")) +
-  guides(fill = guide_legend(title = "Arrest Type (Count)")) +
-  theme(legend.position = "right")
+  # scale_fill_manual(values = 
+  #                     paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
+  #                   labels = 
+  #                     paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
+  #                            " (n=", 
+  #                            counts %>% arrange(desc(Count)) %>% pull(Count), 
+  #                            ")")) +
+  # guides(fill = guide_legend(title = "Arrest Type (Count)")) +
+  # theme(legend.position = "right")
 
 
 
@@ -88,7 +88,7 @@ jitter = base + geom_jitter(color = "#6DB6FF",
   # it suggests medians are significantly different
   # 
 box = jitter + 
-  geom_boxplot(alpha = 0.7, # Adjust alpha for transparency
+  geom_boxplot(alpha = 0.5, # Adjust alpha for transparency
                color = "gray50", 
                linewidth = 0.7,
                notch = TRUE,
@@ -97,18 +97,23 @@ box = jitter +
     # Adds spacing above and below
   scale_y_discrete(expand = expansion(mult = c(0.2, 0)))  
 
-  # calculate first quantile by type to figure out position for in-graph labels
-q1_values <- arrests %>%
-  group_by(Arrest_Type) %>%
-  summarize(Q1 = quantile(Age, 0.25))
 
   # Testing: Update the plot with "Hello!" labels at Q1 positions
 q1labs <- box + 
-  geom_text(data = q1_values,
-            aes(x = Q1, y = Arrest_Type, label = "Hello!"),
-            color = "black",
+  geom_text(data = counts,
+            aes(x = Q1, 
+                y = Arrest_Type, 
+                label = paste(Arrest_Type, "arrests, n =", Count)),
+            color = "gray20",
             size = 3,
+            vjust = 4, # 4 places it below boxplot and scatterplot band
             hjust = 0)  # Set hjust = 0 to align left edge of text with Q1
+
+#labels = 
+  #                     paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
+  #                            " (n=", 
+  #                            counts %>% arrange(desc(Count)) %>% pull(Count), 
+  #                            ")")) 
 
 # Decorate with contextual info
 final = q1labs + 
