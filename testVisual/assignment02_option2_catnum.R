@@ -57,36 +57,17 @@ sub_titleText = 'State police arrests in 2019-2020 centered on 30-35 year olds'
 sourceText = 'Source: Massachusetts State Police'
 x.AxisText = 'Age of Arrestee'
 
-  # Get the number of unique arrest types
-  # (Only for color scale below - can remove this when remove color scale)
-n_types <- length(unique(arrests$Arrest_Type))
-
 base = ggplot(arrests, aes(x = Age,
                            y = reorder(Arrest_Type, Arrest_Type, function(x) length(x))))
-#                           fill = Arrest_Type)) +
-    # uses order by Arrest_Type count (descending) to fill scale and create legend
-    # colors from https://r-charts.com/color-palettes/#discrete
-  # scale_fill_manual(values = 
-  #                     paletteer::paletteer_d("colorBlindness::LightBlue2DarkBlue7Steps")[1:n_types],
-  #                   labels = 
-  #                     paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
-  #                            " (n=", 
-  #                            counts %>% arrange(desc(Count)) %>% pull(Count), 
-  #                            ")")) +
-  # guides(fill = guide_legend(title = "Arrest Type (Count)")) +
-  # theme(legend.position = "right")
-
-
-
 
 jitter = base + geom_jitter(color = "#6DB6FF",
                             alpha = 0.2, #transparency
                             size = 0.5)
+
   # layer a boxplot over the jitter point plot
   # the notch shows confidence interval
   # when the notches between two groups don't overlap then
   # it suggests medians are significantly different
-  # 
 box = jitter + 
   geom_boxplot(alpha = 0.5, # Adjust alpha for transparency
                color = "gray50", 
@@ -96,7 +77,6 @@ box = jitter +
                width = 0.6) +
     # Adds spacing above and below
   scale_y_discrete(expand = expansion(mult = c(0.2, 0)))  
-
 
   # Testing: Update the plot with "Hello!" labels at Q1 positions
 q1labs <- box + 
@@ -108,12 +88,6 @@ q1labs <- box +
             size = 3,
             vjust = 4, # 4 places it below boxplot and scatterplot band
             hjust = 0)  # Set hjust = 0 to align left edge of text with Q1
-
-#labels = 
-  #                     paste0(counts %>% arrange(desc(Count)) %>% pull(Arrest_Type), 
-  #                            " (n=", 
-  #                            counts %>% arrange(desc(Count)) %>% pull(Count), 
-  #                            ")")) 
 
 # Decorate with contextual info
 final = q1labs + 
@@ -133,9 +107,8 @@ final = q1labs +
         plot.background = element_blank(),  # Remove plot background
         axis.title.y = element_blank(),   # Remove y-axis label
         axis.text.y = element_blank(),    # Remove y-axis elements
-        panel.grid.major.x = element_line(color = "gray80", linewidth = 0.5),  # Add vertical grid lines
-        legend.title = element_text(size = 8),  # Adjust title size
-        legend.text = element_text(size = 8),    # Adjust text size
+          # Add vertical grid lines
+        panel.grid.major.x = element_line(color = "gray80", linewidth = 0.5),  
           # Move x-axis label to the left
         axis.title.x = element_text(hjust = 0.04, 
                                     size = 10,
@@ -143,4 +116,3 @@ final = q1labs +
 
 # write to an R data serialization file
 saveRDS(final, file = "assignment02_option2_catnum.rds")
-
