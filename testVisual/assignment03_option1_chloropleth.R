@@ -24,7 +24,17 @@ bostonZips = sf::read_sf(linkZips)
   # 
   # NOTE: You need to aggregate the data from the excel file, 
   # and then merged that aggregated data into the map. 
-  # Then, you can plot the choropleths with the data as it is (countinuous) 
+  # Then, you can plot the chloropleths with the data as it is (countinuous) 
   # or discretize it before plotting.
+  # 
+  # From Jose: 
+  # Remember that the map need NOT be interactive. 
+  # Also keep in mind that since I am requesting  TWO tender types, you need to use FACETS.
+  # If you decide to go for an interactive version, the justification will be 
+  # to use tooltips, interactive legends, and the use of library(leafsync).
+  # Please, follow my request on NON USING raw counts, you should normalize the variable.
+
+summary(bostonCont$Amount)
+tapply(bostonCont$Amount,bostonCont$`Tender Type Description`,summary)
 
 
