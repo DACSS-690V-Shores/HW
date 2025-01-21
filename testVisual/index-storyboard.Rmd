@@ -42,23 +42,11 @@ Chapter 3
 ===================================== 
 
 
-### Scatterplot coming soon
+### Tim's chloropleth
 
 ```{r}
-
+readRDS("assignment03_option2_chloropleth.rds")
 ```
-
-Chapter 4
-===================================== 
-
-
-### Map plot coming soon
-
-```{r}
-
-```
-
-
 
 References
 ===================================== 
