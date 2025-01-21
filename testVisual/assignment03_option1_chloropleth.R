@@ -64,7 +64,10 @@ contrib_zipMap = merge(bostonZips, bostonAggDF, by.x='ZIP5', by.y='zip')
 
 # facet map 1 for contributionPercentage
 base1 = ggplot() + theme_void() +
-  ggtitle('Most donors prefer credit card') +
+  labs(title = 'Most donors prefer credit card',
+       subtitle = 'Boston political campaign contributions in 2024',
+       caption = 'Source: Massachusetts Office of Campaign and Political Finance') +
+  #ggtitle('Most donors prefer credit card') +
   #theme(strip.text = element_blank()) # remove facet labels
   theme(strip.text = element_text(size = 12)) # increase facet label font size
 base1 = base1 + geom_sf(data = contrib_zipMap,
